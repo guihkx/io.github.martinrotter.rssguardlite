@@ -1,0 +1,72 @@
+From fce2ef43699c46f50974de9c04883f7a21568c5f Mon Sep 17 00:00:00 2001
+From: guihkx <626206+guihkx@users.noreply.github.com>
+Date: Fri, 24 Apr 2026 08:58:15 -0300
+Subject: [PATCH] Linux: Adjust app id based on build variant
+
+If it's the "standard" build (WebEngineViewer), then the app id is set
+to "io.github.martinrotter.rssguard".
+
+If it's the "text" build (TextBrowserViewer), then the app id is set to
+"io.github.martinrotter.rssguardlite", plus the app name in the metainfo
+file is set to "RSS Guard Lite".
+---
+ CMakeLists.txt                                      | 1 +
+ resources/desktop/CMakeLists.txt                    | 9 +++++++--
+ resources/scripts/github-actions/build-linux-mac.sh | 3 ++-
+ 3 files changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c95601942..9522bc30d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -170,6 +170,7 @@ if (WEB_ARTICLE_VIEWER_WEBENGINE)
+ 
+   message(STATUS "We will use QtWebEngine-based web viewer.")
+ else()
++  set(APP_REVERSE_NAME "io.github.martinrotter.rssguardlite")
+   add_compile_definitions(WEB_ARTICLE_VIEWER_TEXTBROWSER)
+ 
+   message(STATUS "We will use QTextBrowser-based web viewer.")
+diff --git a/resources/desktop/CMakeLists.txt b/resources/desktop/CMakeLists.txt
+index 2de568abb..e67e588e3 100644
+--- a/resources/desktop/CMakeLists.txt
++++ b/resources/desktop/CMakeLists.txt
+@@ -1,5 +1,10 @@
+-set(APPDATA_NAME "${APP_NAME}")
+-set(APPDATA_SUMMARY "Simple, yet powerful news feed reader")
++if(WEB_ARTICLE_VIEWER_WEBENGINE)
++  set(APPDATA_NAME "${APP_NAME}")
++  set(APPDATA_SUMMARY "Simple, yet powerful news feed reader")
++else()
++  set(APPDATA_NAME "${APP_NAME} Lite")
++  set(APPDATA_SUMMARY "Simple, yet powerful news feed reader (without web browser)")
++endif()
+ 
+ configure_file(
+   rssguard.desktop.in
+diff --git a/resources/scripts/github-actions/build-linux-mac.sh b/resources/scripts/github-actions/build-linux-mac.sh
+index bcf284f42..1626d9fc9 100755
+--- a/resources/scripts/github-actions/build-linux-mac.sh
++++ b/resources/scripts/github-actions/build-linux-mac.sh
+@@ -30,7 +30,6 @@ fi
+ 
+   libmpv="ON"
+   qtmultimedia="OFF"
+-  app_id="io.github.martinrotter.rssguard"
+ else
+   echo "We are building for macOS."
+   is_linux=false
+@@ -50,8 +49,10 @@ else
+ fi
+ 
+ if [[ "$webengine_viewer" == "ON" ]]; then
++  app_id="io.github.martinrotter.rssguard"
+   variant_id="web"
+ else
++  app_id="io.github.martinrotter.rssguardlite"
+   variant_id="text"
+ fi
+ 
+-- 
+2.54.0
+

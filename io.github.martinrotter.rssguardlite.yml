@@ -3,7 +3,7 @@ runtime: org.kde.Platform
 runtime-version: '6.10'
 sdk: org.kde.Sdk
 sdk-extensions:
-  - org.freedesktop.Sdk.Extension.node24
+  - org.freedesktop.Sdk.Extension.golang # To build rssguard-article-extractor
 command: rssguard
 
 finish-args:
@@ -13,18 +13,10 @@ finish-args:
   - --socket=fallback-x11
   - --socket=pulseaudio
   - --socket=wayland
-  - --filesystem=xdg-download
   - --talk-name=org.kde.StatusNotifierWatcher
   - --talk-name=org.freedesktop.Notifications
 
 modules:
-  - name: nodejs-and-npm
-    buildsystem: simple
-    build-commands:
-      - mkdir -p /app/{bin,lib}
-      - cp -a /usr/lib/sdk/node24/bin/{node,npm} /app/bin
-      - cp -a /usr/lib/sdk/node24/lib/* /app/lib
-
   - name: clang-format
     buildsystem: cmake-ninja
     subdir: llvm
@@ -48,31 +40,47 @@ modules:
           stable-only: true
           url-template: https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/llvm-project-$version.src.tar.xz
 
-  - name: rssguard
+  - name: qxmpp
     buildsystem: cmake-ninja
     config-opts:
-      - -DBUILD_WITH_QT6=ON
-      - -DENABLE_COMPRESSED_SITEMAP=ON
-      - -DENABLE_MEDIAPLAYER_LIBMPV=OFF
-      - -DENABLE_MEDIAPLAYER_QTMULTIMEDIA=ON
-      - -DFORCE_BUNDLE_ICONS=ON
-      - -DIS_FLATPAK_BUILD=ON
-      - -DNO_LITE=OFF
-      - -DNO_UPDATE_CHECK=ON
+      - -DBUILD_TESTING=OFF
+      - -DBUILD_EXAMPLES=OFF
     sources:
       - type: archive
-        dest-filename: rssguard.tar.gz
-        url: https://api.github.com/repos/martinrotter/rssguard/tarball/4.8.6
-        sha256: c1ec4ce2157240679bb5e3d5f1d8b3fef3553b88723673313ac2a1bfe28143fe
+        url: https://download.kde.org/unstable/qxmpp/qxmpp-1.15.1.tar.xz
+        sha256: 0747758a4f5b5ea4c60686c65b390766f1909d09e1a5a457c8e80ef272730c46
         x-checker-data:
-          type: json
-          url: https://api.github.com/repos/martinrotter/rssguard/releases/latest
-          version-query: .tag_name
-          url-query: .tarball_url
-      # https://github.com/martinrotter/rssguard/commit/7ec01c8dbafe45b55f133b0fd89384e8cb953abe
-      - type: patch
-        paths:
-          - patches/0001-Set-a-fixed-release-date.patch
-          - patches/Update-ghostery-adblocker-version.patch
+          type: anitya
+          project-id: 4149
+          stable-only: true
+          url-template: https://download.kde.org/unstable/qxmpp/qxmpp-$version.tar.xz
+    cleanup:
+      - /include
+      - /lib/cmake
+      - /lib/pkgconfig
+
+  - name: rssguard
+    buildsystem: cmake-ninja
+    build-options:
+      append-path: /usr/lib/sdk/golang/bin
+      env:
+        GOROOT: /usr/lib/sdk/golang
+    config-opts:
+      - -DIS_DEV_BUILD=OFF
+      - -DREVISION_FROM_GIT=OFF
+      - -DNO_UPDATE_CHECK=ON
+      - -DIS_FLATPAK_BUILD=ON
+      - -DBUILD_XMPP_PLUGIN=ON
+      - -DWEB_ARTICLE_VIEWER_WEBENGINE=OFF
+      - -DENABLE_MEDIAPLAYER_LIBMPV=OFF
+    sources:
+      - type: archive
+        url: https://github.com/martinrotter/rssguard/releases/download/devbuild5/rssguard-dev-fbeeb8e6d-src.tar.gz
+        sha256: 2058f63e4cb6c3ae73d0ecbdbf9722bbc01efdf057cb6d430ea0bb44db8fb90d
+        x-checker-data:
+          type: anitya
+          project-id: 19046
+          stable-only: true
+          url-template: https://github.com/martinrotter/rssguard/releases/download/$version/rssguard-$version-src.tar.gz
     cleanup:
       - /include
