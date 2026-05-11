@@ -88,5 +88,7 @@ modules:
           project-id: 19046
           stable-only: true
           url-template: https://github.com/martinrotter/rssguard/releases/download/$version/rssguard-$version-src.tar.gz
+      - type: patch
+        path: 64cf521581031643eea5d0ece704e56e9e96684e.patch
     cleanup:
       - /include
